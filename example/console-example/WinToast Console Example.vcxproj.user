@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <LocalDebuggerCommandArguments>--appname "Yolo" --aumi "My.Console.Example" --image "$(ProjectDir)if_terminal_298878.png" --expirems 10000 --action Yes --action No --text "Do you want to try to take over the world?"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>--appname "Yolo" --aumi "My.Console.Example" --image "$(ProjectDir)if_terminal_298878.png" --custom-xml "&lt;toast duration=\"short\" xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\"&gt;&lt;audio silent=\"true\" /&gt;&lt;visual&gt;&lt;binding template=\"ToastGeneric\"&gt;&lt;image placement=\"appLogoOverride\" hint-crop=\"circle\" src=\"\" /&gt;&lt;text hint-maxLines=\"1\"&gt;&lt;/text&gt;&lt;text placement=\"attribution\"&gt;via SMS&lt;/text&gt;&lt;/binding&gt;&lt;/visual&gt;&lt;/toast&gt;"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>

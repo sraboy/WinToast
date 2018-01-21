@@ -66,6 +66,7 @@ enum Results {
 #define COMMAND_HELP		L"--help"
 #define COMMAND_IMAGE		L"--image"
 #define COMMAND_SHORTCUT	L"--only-create-shortcut"
+#define COMMAND_CUSTOMXML   L"--custom-xml"
 
 void print_help() {
 	std::wcout << "WinToast Console Example [OPTIONS]" << std::endl;
@@ -78,6 +79,7 @@ void print_help() {
 	std::wcout << "\t" << COMMAND_IMAGE << L" : set the image path" << std::endl;
 	std::wcout << "\t" << COMMAND_SHORTCUT << L" : create the shortcut for the app" << std::endl;
 	std::wcout << "\t" << COMMAND_HELP << L" : Print the help description" << std::endl;
+    std::wcout << "\t" << COMMAND_CUSTOMXML << L" : Set custom XML" << std::endl;
 }
 
 
@@ -93,7 +95,7 @@ int wmain(int argc, LPWSTR *argv)
         return Results::SystemNotSupported;
     }
 
-    LPWSTR appName = L"Console WinToast Example", appUserModelID = L"WinToast Console Example", text = NULL, imagePath = NULL;
+    LPWSTR appName = L"Console WinToast Example", appUserModelID = L"WinToast Console Example", text = NULL, imagePath = NULL, customXmlTemplate = NULL;
     std::vector<std::wstring> actions;
     INT64 expiration = 0;
 
@@ -115,6 +117,8 @@ int wmain(int argc, LPWSTR *argv)
 			text = argv[++i];
 		else if (!wcscmp(COMMAND_SHORTCUT, argv[i]))
 			onlyCreateShortcut = true;
+        else if (!wcscmp(COMMAND_CUSTOMXML, argv[i]))
+            customXmlTemplate = argv[++i];
 		else if (!wcscmp(COMMAND_HELP, argv[i])) {
 			print_help();
 			return 0;
@@ -127,8 +131,8 @@ int wmain(int argc, LPWSTR *argv)
     WinToast::instance()->setAppUserModelId(appUserModelID);
 
     if (onlyCreateShortcut) {
-        if (imagePath || text || actions.size() > 0 || expiration) {
-            std::wcerr << L"--only-create-shortcut does not accept images/text/actions/expiration" << std::endl;
+        if (imagePath || text || actions.size() > 0 || expiration || customXmlTemplate) {
+            std::wcerr << L"--only-create-shortcut does not accept images/text/actions/expiration/custom XML" << std::endl;
             return 9;
         }
         enum WinToast::ShortcutResult result = WinToast::instance()->createShortcut();
@@ -144,7 +148,7 @@ int wmain(int argc, LPWSTR *argv)
     }
 
     bool withImage = (imagePath != NULL);
-	WinToastTemplate templ( withImage ? WinToastTemplate::ImageAndText01 : WinToastTemplate::Text01);
+	WinToastTemplate templ( withImage ? WinToastTemplate::CustomXmlImageAndText : WinToastTemplate::CustomXmlText);
 	templ.setTextField(text, WinToastTemplate::FirstLine);
     
 	for (auto const &action : actions)
@@ -153,8 +157,22 @@ int wmain(int argc, LPWSTR *argv)
         templ.setExpiration(expiration);
     if (withImage)
         templ.setImagePath(imagePath);
+    /*
+    std::wstring pre_xml(L"<toast duration='short'>"
+                         L" <audio silent='true'/>"
+                         L" <visual>"
+                         L" <binding template='ToastGeneric'>");
+
+    std::wstring image(L" <image placement='appLogoOverride' hint-crop='circle' src=''/>");
     
-    if (WinToast::instance()->showToast(templ, new CustomHandler()) < 0) {
+    std::wstring content(L" <text hint-maxLines='1'>Encryption Succesful!</text>"
+                         L" <text placement='attribution'>via SMS</text>");
+
+    std::wstring post_xml(L" </binding>"
+                          L" </visual>"
+                          L"</toast>");
+    std::wstring allxml(pre_xml + image + content + post_xml);*/
+    if (WinToast::instance()->showToast(templ, new CustomHandler(), customXmlTemplate) < 0) {
         std::wcerr << L"Could not launch your toast notification!";
 		return Results::ToastFailed;
     }

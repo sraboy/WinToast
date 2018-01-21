@@ -53,6 +53,8 @@ namespace WinToastLib {
             Text02 = ToastTemplateType::ToastTemplateType_ToastText02,
             Text03 = ToastTemplateType::ToastTemplateType_ToastText03,
             Text04 = ToastTemplateType::ToastTemplateType_ToastText04,
+            CustomXmlText,
+            CustomXmlImageAndText,
             WinToastTemplateTypeCount
         };
 
@@ -65,7 +67,7 @@ namespace WinToastLib {
         inline void                                 setExpiration(_In_ INT64 millisecondsFromNow) { _expiration = millisecondsFromNow; }
         inline int                                  textFieldsCount() const { return static_cast<int>(_textFields.size()); }
         inline int                                  actionsCount() const { return static_cast<int>(_actions.size()); }
-        inline bool                                 hasImage() const { return _type < Text01; }
+        inline bool                                 hasImage() const { return _type < Text01 || _type == CustomXmlImageAndText; }
         inline std::vector<std::wstring>            textFields() const { return _textFields; }
         inline std::wstring                         textField(_In_ TextField pos) const { return _textFields[pos]; }
         inline std::wstring                         actionLabel(_In_ int pos) const { return _actions[pos]; }
@@ -94,7 +96,7 @@ namespace WinToastLib {
                                                     );
         virtual bool            initialize();
         virtual bool            isInitialized() const { return _isInitialized; }
-        virtual INT64           showToast(_In_ const WinToastTemplate& toast, _In_ IWinToastHandler* handler);
+        virtual INT64           showToast(_In_ const WinToastTemplate& toast, _In_ IWinToastHandler* handler, _In_opt_ const std::wstring& customXml = L"");
         virtual bool            hideToast(_In_ INT64 id);
         virtual void            clear();
         inline std::wstring     appName() const { return _appName; }

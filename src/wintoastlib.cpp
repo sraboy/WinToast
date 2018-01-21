@@ -4,6 +4,7 @@
 
 #pragma comment(lib,"shlwapi")
 #pragma comment(lib,"user32")
+#pragma comment(lib,"runtimeobject")
 
 #ifdef NDEBUG
     #define DEBUG_MSG(str) do { } while ( false )
@@ -504,7 +505,7 @@ HRESULT	WinToast::createShellLinkHelper() {
     return hr;
 }
 
-INT64 WinToast::showToast(_In_ const WinToastTemplate& toast, _In_  IWinToastHandler* handler)  {
+INT64 WinToast::showToast(_In_ const WinToastTemplate& toast, _In_  IWinToastHandler* handler, _In_opt_ const std::wstring& customXml)  {
     INT64 id = -1;
     if (!isInitialized()) {
         DEBUG_MSG("Error when launching the toast. WinToast is not initialized =(");
@@ -525,26 +526,38 @@ INT64 WinToast::showToast(_In_ const WinToastTemplate& toast, _In_  IWinToastHan
             hr = DllImporter::Wrap_GetActivationFactory(WinToastStringWrapper(RuntimeClass_Windows_UI_Notifications_ToastNotification).Get(), &notificationFactory);
             if (SUCCEEDED(hr)) {
 				ComPtr<IXmlDocument> xmlDocument;
-				HRESULT hr = notificationManager->GetTemplateContent(ToastTemplateType(toast.type()), &xmlDocument);
-                if (SUCCEEDED(hr)) {
-                    const int fieldsCount = toast.textFieldsCount();
-                    for (int i = 0; i < fieldsCount && SUCCEEDED(hr); i++) {
-                        hr = setTextFieldHelper(xmlDocument.Get(), toast.textField(WinToastTemplate::TextField(i)), i);
-                    }
-                    bool modernActions = supportActions();
-                    if (!modernActions) DEBUG_MSG("Modern Actions not supported in this os version");
-                    if (SUCCEEDED(hr) && modernActions) {
-                        const int actionsCount = toast.actionsCount();
-                        WCHAR buf[12];
-                        for (int i = 0; i < actionsCount && SUCCEEDED(hr); i++) {
-                            _snwprintf_s(buf, sizeof(buf) / sizeof(*buf), _TRUNCATE, L"%d", i);
-                            hr = addActionHelper(xmlDocument.Get(), toast.actionLabel(i), buf);
+                if ( !customXml.empty() ) {
+                    ComPtr<ABI::Windows::Data::Xml::Dom::IXmlDocumentIO> docIO;
+                    Microsoft::WRL::Wrappers::HStringReference toastXML(customXml.c_str());
+                    hr = Windows::Foundation::ActivateInstance(WinToastStringWrapper(RuntimeClass_Windows_Data_Xml_Dom_XmlDocument).Get(), &docIO);
+                    if ( SUCCEEDED(hr) ) {
+                        hr = docIO->LoadXml(toastXML.Get());
+                        if ( SUCCEEDED(hr) ) {
+                            hr = docIO.CopyTo(static_cast<IXmlDocument**>( &xmlDocument ));
                         }
-                        DEBUG_MSG("xml: " << Util::AsString(xmlDocument));
                     }
+                }
+				//HRESULT hr = notificationManager->GetTemplateContent(ToastTemplateType(toast.type()), &xmlDocument);
+                if (SUCCEEDED(hr)) {
+                    //const int fieldsCount = toast.textFieldsCount();
+                    //for (int i = 0; i < fieldsCount && SUCCEEDED(hr); i++) {
+                    //    hr = setTextFieldHelper(xmlDocument.Get(), toast.textField(WinToastTemplate::TextField(i)), i);
+                    //}
+                    //bool modernActions = supportActions();
+                    //if (!modernActions) DEBUG_MSG("Modern Actions not supported in this os version");
+                    //if (SUCCEEDED(hr) && modernActions) {
+                    //    const int actionsCount = toast.actionsCount();
+                    //    WCHAR buf[12];
+                    //    for (int i = 0; i < actionsCount && SUCCEEDED(hr); i++) {
+                    //        _snwprintf_s(buf, sizeof(buf) / sizeof(*buf), _TRUNCATE, L"%d", i);
+                    //        hr = addActionHelper(xmlDocument.Get(), toast.actionLabel(i), buf);
+                    //    }
+                        //DEBUG_MSG("xml: " << Util::AsString(xmlDocument));
+                    //}
                     if (SUCCEEDED(hr)) {
                         hr = toast.hasImage() ? setImageFieldHelper(xmlDocument.Get(), toast.imagePath()) : hr;
                         if (SUCCEEDED(hr)) {
+                            DEBUG_MSG("xml: " << Util::AsString(xmlDocument));
                             ComPtr<IToastNotification> notification;
                             hr = notificationFactory->CreateToastNotification(xmlDocument.Get(), &notification);
                             if (SUCCEEDED(hr)) {
